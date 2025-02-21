@@ -3,65 +3,91 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Product;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
-class productController extends Controller
+class ProductController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+
     public function index()
     {
-        $products = Product::get();
-        return response()->json(['products'=>$products],200);
+        $products = Product::all();
+
+        return response()->json([
+            'products' => $products
+        ],200);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
+  
 
-    /**
-     * Store a newly created resource in storage.
-     */
+
     public function store(Request $request)
     {
-        //
+        $validater = Validator::make($request->all(), [
+            "name"=>"required",
+            "price"=>"required|numeric",
+            "quantity"=>"required"
+        ]);
+
+        if($validater->fails()){
+            return response()->json([
+                'message' => 'validation error',
+                'errors' => $validater->errors()
+            ], 401);
+        }
+  
+        $product = new Product();
+        $product->name = $request->name;
+        $product->price = $request->price;
+        $product->quantity = $request->quantity;
+        $product->save();
+
+        return response()->json([
+            'message' => "Product Created successfully!",
+            'product' => $product
+        ], 200);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+   
+    public function show(Product $product)
     {
-        //
+        return response()->json([
+            'product' => $product
+        ], 200);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function update(Request $request, Product $product)
     {
-        //
-    }
+        $validater = Validator::make($request->all(), [
+            'name' => 'required|max:100',
+            'price' => 'required',
+            'unit'=>'required|max:10'
+        ]);
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
+        if($validater->fails()){
+            return response()->json([
+                'message' => 'validation error',
+                'errors' => $validater->errors()
+            ], 401);
+        }
+  
+        $product->name = $request->name;
+        $product->price = $request->price;
+        $product->unit = $request->unit;
+        $product->save();
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
+        return response()->json([
+            'message' => "Product Updated successfully!",
+            'product' => $product
+        ], 200);
+    }
+    public function destroy(Product $product)
     {
-        //
+        $product->delete();
+        return response()->json([
+            'message' => "Product Deleted successfully!",
+            'product' => $product
+        ], 200);
     }
 }
